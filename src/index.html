@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="titlebar">
+        <div class="titlebar-drag"></div>
+        <div class="titlebar-title">Wave</div>
+        <div class="titlebar-controls">
+            <button class="titlebar-btn" onclick="window.electronAPI.minimizeWindow()">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="titlebar-btn" onclick="window.electronAPI.maximizeWindow()">
+                <i class="fas fa-square"></i>
+            </button>
+            <button class="titlebar-btn close" onclick="window.electronAPI.closeWindow()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header class="app-header">
+            <h1><i class="fas fa-wave-square"></i> Wave</h1>
+            <p class="tagline">Correcteur de code IA crée par Maxlware Developement</p>
+        </header>
+
+        <div class="main-content">
+            <div class="editor-section">
+                <div class="editor-header">
+                    <span>Éditeur de Code</span>
+                    <div class="editor-actions">
+                        <select id="languageSelect">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                            <option value="php">PHP</option>
+                            <option value="html">HTML</option>
+                            <option value="css">CSS</option>
+                            <option value="typescript">TypeScript</option>
+                            <option value="rust">Rust</option>
+                            <option value="go">Go</option>
+                            <option value="swift">Swift</option>
+                            <option value="kotlin">Kotlin</option>
+                        </select>
+                        <button class="btn" onclick="loadFile()">
+                            <i class="fas fa-folder-open"></i> Ouvrir
+                        </button>
+                        <button class="btn" onclick="saveFile()">
+                            <i class="fas fa-save"></i> Sauvegarder
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="editor-container">
+                    <textarea id="codeEditor" placeholder="Collez votre code ici (Ctrl+V+W) ou importez un fichier..."></textarea>
+                </div>
+                
+                <div class="editor-footer">
+                    <button class="btn primary" onclick="analyzeCode()">
+                        <i class="fas fa-search"></i> Analyser (F5)
+                    </button>
+                    <button class="btn" onclick="runSandbox()">
+                        <i class="fas fa-play"></i> Sandbox (F6)
+                    </button>
+                    <button class="btn accent" onclick="aiCorrect()">
+                        <i class="fas fa-robot"></i> Corriger (F7)
+                    </button>
+                    <button class="btn" onclick="showGenerateModal()">
+                        <i class="fas fa-magic"></i> Générer (F8)
+                    </button>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div class="results-header">
+                    <span>Résultats</span>
+                    <div class="results-tabs">
+                        <button class="tab-btn active" onclick="switchTab('analysis')">Analyse</button>
+                        <button class="tab-btn" onclick="switchTab('sandbox')">Sandbox</button>
+                        <button class="tab-btn" onclick="switchTab('ai')">Corrections IA</button>
+                        <button class="tab-btn" onclick="switchTab('settings')">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="results-content">
+                    <div id="analysisTab" class="tab-content active">
+                        <div class="error-list" id="errorList">
+                            <div class="empty-state">
+                                <i class="fas fa-code"></i>
+                                <p>Aucune analyse effectuée. Cliquez sur "Analyser" pour commencer.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="sandboxTab" class="tab-content">
+                        <div class="sandbox-output" id="sandboxOutput">
+                            <div class="empty-state">
+                                <i class="fas fa-cube"></i>
+                                <p>Aucune exécution sandbox. Cliquez sur "Exécuter" pour tester votre code.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="aiTab" class="tab-content">
+                        <div class="ai-results" id="aiResults">
+                            <div class="empty-state">
+                                <i class="fas fa-robot"></i>
+                                <p>Aucune correction IA. Cliquez sur "Corriger" pour optimiser votre code.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="settingsTab" class="tab-content">
+                        <div class="settings-container">
+                            <h3><i class="fas fa-sliders-h"></i> Configuration Gemini</h3>
+                            
+                            <div class="setting-group">
+                                <label for="geminiApiKey">Clé API Gemini*</label>
+                                <input type="password" id="geminiApiKey" placeholder="AIzaSy... (votre clé API)">
+                                <small>
+                                    <a href="#" onclick="window.electronAPI.openExternal('https://makersuite.google.com/app/apikey')">
+                                        <i class="fas fa-external-link-alt"></i> Obtenir une clé API Gemini gratuite
+                                    </a>
+                                </small>
+                            </div>
+                            
+                            <div class="connection-status" id="connectionStatus"></div>
+                            
+                            <div class="setting-group">
+                                <label for="aiModel">Modèle IA</label>
+                                <select id="aiModel">
+                                    <option value="gemini-pro">Gemini Pro</option>
+                                    <option value="gemini-pro-vision">Gemini Pro Vision</option>
+                                </select>
+                                <small>Gemini Pro est recommandé pour le code</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="maxTokens">Tokens maximum</label>
+                                <input type="number" id="maxTokens" value="2048" min="100" max="8192">
+                                <small>Nombre maximum de tokens dans la réponse (100-8192)</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="temperature">Température</label>
+                                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.2">
+                                <small id="tempValue">0.2 (précis) - 1.0 (créatif)</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="sandboxTimeout">Timeout Sandbox (ms)</label>
+                                <input type="number" id="sandboxTimeout" value="5000" min="1000" max="30000">
+                                <small>Temps maximum d'exécution en sandbox</small>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label>
+                                    <input type="checkbox" id="autoUpdates" checked>
+                                    Vérifier automatiquement les mises à jour
+                                </label>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="theme">Thème</label>
+                                <select id="theme">
+                                    <option value="dark">Sombre</option>
+                                    <option value="light">Clair</option>
+                                </select>
+                            </div>
+                            
+                            <div class="settings-actions">
+                                <button class="btn primary" onclick="saveSettings()">
+                                    <i class="fas fa-save"></i> Sauvegarder
+                                </button>
+                                
+                                <button class="btn" onclick="testGeminiConnection()">
+                                    <i class="fas fa-plug"></i> Tester la connexion
+                                </button>
+                                
+                                <button class="btn" onclick="checkForUpdates()">
+                                    <i class="fas fa-sync"></i> Mises à jour
+                                </button>
+                            </div>
+                            
+                            <div class="info-box">
+                                <h4><i class="fas fa-info-circle"></i> Information</h4>
+                                <p>Gemini Pro est gratuit pour un usage limité (environ 60 requêtes/minute).</p>
+                                <p>Pour générer une clé API :</p>
+                                <ol>
+                                    <li>Allez sur <a href="#" onclick="window.electronAPI.openExternal('https://makersuite.google.com/app/apikey')">Google AI Studio</a></li>
+                                    <li>Connectez-vous avec votre compte Google</li>
+                                    <li>Créez une nouvelle clé API</li>
+                                    <li>Copiez-la et collez-la ci-dessus</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="generateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-magic"></i> Générer du Code</h3>
+                <button class="modal-close" onclick="closeGenerateModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="generatePrompt">Description du code à générer</label>
+                    <textarea id="generatePrompt" placeholder="Ex: Une fonction JavaScript qui trie un tableau d'objets par date, Une classe Python pour gérer une base de données SQLite..." rows="4"></textarea>
+                </div>
+                <div class="setting-group">
+                    <label for="generateLanguage">Langage</label>
+                    <select id="generateLanguage">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                        <option value="php">PHP</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                        <option value="typescript">TypeScript</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeGenerateModal()">Annuler</button>
+                <button class="btn primary" onclick="generateCode()">
+                    <i class="fas fa-bolt"></i> Générer avec Gemini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="update-panel" id="updatePanel">
+        <span><i class="fas fa-cloud-download-alt"></i> Mise à jour disponible</span>
+        <div class="update-dropdown" id="updateDropdown">
+            <div class="update-title">Nouvelle version disponible !</div>
+            <div class="update-subtitle">Version <span id="latestVersion"></span></div>
+            <div class="update-text" id="changelog"></div>
+            <a class="update-btn" id="downloadLink" target="_blank">
+                <i class="fas fa-download"></i> Télécharger
+            </a>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
