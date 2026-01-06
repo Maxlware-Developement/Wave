@@ -12,7 +12,7 @@ const VERSION_URL = 'https://mxlw-api-tempo.eletrixcloud.space/wave/version';
 
 // Configuration for app
 const defaultConfig = {
-  geminiApiKey: 'AIzaSyAfABqzmZUxziIxTJTjc0Nu-NJBClCoZvQ',
+  geminiApiKey: 'API_KEY_HERE',
   autoCheckUpdates: true,
   theme: 'dark',
   sandboxTimeout: 5000,
